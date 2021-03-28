@@ -1,5 +1,6 @@
 #include <IRremote.h>
 #include <Servo.h>
+#include <NewPing.h>
 
 #define ENABLE_LED_FEEDBACK true
 #define USE_DEFAULT_FEEDBACK_LED_PIN 0
@@ -12,17 +13,24 @@ const int RightMotorBackward = 4;
 const int servoPin = 11;
 const int IR_RECEIVE_PIN = 10;
 
+#define TRIGGER_PIN  13  
+#define ECHO_PIN     12  
+#define MAX_DISTANCE 200
+
+
+NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE);
 Servo servo_motor;
 
+  
 enum class DIRECTION {
   FORWARD,
   BACKWARD,
   STOP
 };
 
+
 auto moveState = DIRECTION::STOP;
 boolean state = false;
-
 const int TURN_DELAY = 100;
 
 void setup() {  
@@ -47,6 +55,11 @@ void setup() {
 
 void loop() {
 
+  int dist = sonar.ping_cm();
+  if ((dist < 5) && (moveState == DIRECTION::FORWARD)) {
+    moveStop();
+  }
+  
   if (IrReceiver.decode()) {
     IrReceiver.printIRResultShort(&Serial);
   
@@ -54,7 +67,7 @@ void loop() {
       moveBackward();
       
     } else if (IrReceiver.decodedIRData.command == 0x18) {
-      moveForward();
+      moveForward();          
       
     } else if (IrReceiver.decodedIRData.command == 0x8) {
       turnLeft();
